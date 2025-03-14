@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1741255294 source:c:\users\admin\downloads\codegame\gameyc\gameyc\main.cpp
+1741871710 source:c:\users\admin\downloads\codegame\gameyc\gameyc\main.cpp
 	"Character.h"
 
 1740546783 c:\users\admin\downloads\codegame\gameyc\gameyc\main.h
@@ -412,12 +412,13 @@
 	"begin_code.h"
 	"close_code.h"
 
-1741255294 source:c:\users\admin\downloads\codegame\gameyc\gameyc\character.cpp
+1741913432 source:c:\users\admin\downloads\codegame\gameyc\gameyc\character.cpp
 	"Character.h"
-	<iostream>
 
-1741255333 c:\users\admin\downloads\codegame\gameyc\gameyc\character.h
+1741912402 c:\users\admin\downloads\codegame\gameyc\gameyc\character.h
 	<SDL.h>
 	<SDL_image.h>
 	<iostream>
+	<vector>
+	<algorithm>
 

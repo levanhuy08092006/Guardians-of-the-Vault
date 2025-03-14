@@ -1,109 +1,163 @@
 #include "Character.h"
-#include <iostream>
 
+// Định nghĩa biến toàn cục
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 Character character;
+bool isLeftPressed = false;
+bool isRightPressed = false;
+vector<Bullet> bullets;
 
+// Các hàm khác giữ nguyên
 bool init() {
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) return false;
+    //Khởi tạo SDL để xử lý đồ họa
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << endl;
+        return false;
+    }
+    //tạo cửa sổ có kích thước SCREEN_WIDTH x SCREEN_HEIGHT
     window = SDL_CreateWindow("Character Movement", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-    if (!window) return false;
+    if (!window) {
+        cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << endl;
+        return false;
+    }
+    //tạo bộ vẽ (renderer) để vẽ lên cửa sổ
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (!renderer) return false;
-    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) return false;
+    if (!renderer) {
+        cerr << "Renderer could not be created! SDL_Error: " << SDL_GetError() << endl;
+        return false;
+    }
+    //Khởi tạo SDL_image để hỗ trợ ảnh PNG
+    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
+        cerr << "SDL_image could not initialize! SDL_image Error: " << IMG_GetError() << endl;
+        return false;
+    }
     return true;
 }
 
 SDL_Texture* loadTexture(const char* path) {
     SDL_Surface* loadedSurface = IMG_Load(path);
-    if (!loadedSurface) return nullptr;
+    if (!loadedSurface) {
+        cerr << "Unable to load image " << path << "! SDL_image Error: " << IMG_GetError() << endl;
+        return nullptr;
+    }
+    /*SDL_CreateTextureFromSurface(renderer, loadedSurface): Chuyển ảnh từ SDL_Surface thành SDL_Texture để hiển thị lên màn hình.
+     SDL_FreeSurface(loadedSurface): Giải phóng bộ nhớ của loadedSurface vì đã chuyển sang texture.*/
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
     SDL_FreeSurface(loadedSurface);
+    if (!texture) {
+        cerr << "Unable to create texture from " << path << "! SDL Error: " << SDL_GetError() << endl;
+    }
     return texture;
 }
 
 bool loadCharacter() {
-    const char* runLeftFiles[8] = {"run11.png", "run21.png", "run31.png", "run41.png", "run51.png", "run61.png", "run71.png", "run81.png"};
     const char* runRightFiles[8] = {"run1.png", "run2.png", "run3.png", "run4.png", "run5.png", "run6.png", "run7.png", "run8.png"};
+    const char* runLeftFiles[8] = {"run11.png", "run21.png", "run31.png", "run41.png", "run51.png", "run61.png", "run71.png", "run81.png"};
 
     for (int i = 0; i < 8; ++i) {
-        character.runLeft[i] = loadTexture(runLeftFiles[i]);
         character.runRight[i] = loadTexture(runRightFiles[i]);
-        if (!character.runLeft[i] || !character.runRight[i]) return false;
+        character.runLeft[i] = loadTexture(runLeftFiles[i]);
+        if (!character.runRight[i] || !character.runLeft[i]) return false;
     }
 
-    character.up = loadTexture("bay.png");
-    character.down = loadTexture("bay.png");
-    if (!character.up || !character.down) return false;
+    character.jump = loadTexture("bay.png");      // Ảnh nhảy khi di chuyển sang phải
+    character.jumpLeft = loadTexture("bay2.png"); // Ảnh nhảy khi di chuyển sang trái
+    if (!character.jump || !character.jumpLeft) return false;
 
-    character.x = SCREEN_WIDTH / 2;
-    character.y = SCREEN_HEIGHT / 2;
-    character.direction = 1;
+    character.x = 50;
+    character.y = SCREEN_HEIGHT-80;
+    character.direction = 3; // Mặc định hướng sang phải
     character.frame = 0;
     character.moving = false;
+    character.isJumping = false;
+    character.jumpVelocity = 0;
     return true;
 }
 
 void handleEvent(SDL_Event& e) {
     if (e.type == SDL_KEYDOWN) {
-        character.moving = true;
         switch (e.key.keysym.sym) {
-            case SDLK_UP: if (character.y > 0) character.y -= CHARACTER_SPEED; character.direction = 0; break;
-            case SDLK_DOWN: if (character.y < SCREEN_HEIGHT - 80) character.y += CHARACTER_SPEED; character.direction = 1; break;
-            case SDLK_LEFT: if (character.x > 0) character.x -= CHARACTER_SPEED; character.direction = 2; break;
-            case SDLK_RIGHT: if (character.x < SCREEN_WIDTH - 80) character.x += CHARACTER_SPEED; character.direction = 3; break;
+            case SDLK_UP:
+                if (!character.isJumping) {
+                    character.isJumping = true;
+                    character.jumpVelocity = -15 ; // Tốc độ nhảy ban đầu
+                }
+                break;;
+            case SDLK_LEFT:
+                isLeftPressed = true;
+                character.direction = 2; // Cập nhật hướng sang trái
+                break;
+            case SDLK_RIGHT:
+                isRightPressed = true;
+                character.direction = 3; // Cập nhật hướng sang phải
+                break;
+            case SDLK_SPACE: // Bắn đạn khi nhấn phím Space
+                Bullet newBullet;
+                    if (character.direction == 3) { // Nếu nhân vật đang quay sang phải
+                newBullet.x = character.x + 45; // Vị trí xuất phát của đạn
+                newBullet.y = character.y + 5;
+                    } else if (character.direction == 2) { // Nếu nhân vật đang quay sang trái
+                newBullet.x = character.x; // Vị trí xuất phát của đạn
+                newBullet.y = character.y + 5;
+                    }
+                newBullet.direction = character.direction; // Hướng đạn theo hướng nhân vật
+                bullets.push_back(newBullet);
+                break;
         }
     }
     if (e.type == SDL_KEYUP) {
-        character.moving = false;
+        switch (e.key.keysym.sym) {
+            case SDLK_LEFT: isLeftPressed = false; break;
+            case SDLK_RIGHT: isRightPressed = false; break;
+        }
     }
 }
 
 void render() {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Màu nền đen
     SDL_RenderClear(renderer);
-    SDL_Texture* currentTexture = (character.direction == 0 || character.direction == 1) ? character.up : (character.direction == 2 ? character.runLeft[character.frame] : character.runRight[character.frame]);
-    SDL_Rect destRect = {character.x, character.y, 80, 80};
+
+    // Render nhân vật
+    SDL_Texture* currentTexture = nullptr;
+    if (character.isJumping) {
+        if (character.direction == 2) {
+            currentTexture = character.jumpLeft;
+        } else {
+            currentTexture = character.jump;
+        }
+    } else {
+        if (character.direction == 2) {
+            currentTexture = character.runLeft[character.frame];
+        } else {
+            currentTexture = character.runRight[character.frame];
+        }
+    }
+    SDL_Rect destRect = {character.x, character.y, 60, 60};
     SDL_RenderCopy(renderer, currentTexture, nullptr, &destRect);
+
+    // Render đạn
+    for (auto& bullet : bullets) {
+        SDL_Rect bulletRect = {bullet.x, bullet.y, 10, 10}; // Kích thước đạn 10x10
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Màu đỏ
+        SDL_RenderFillRect(renderer, &bulletRect);
+    }
+
     SDL_RenderPresent(renderer);
 }
 
 void close() {
     for (int i = 0; i < 8; ++i) {
-        SDL_DestroyTexture(character.runLeft[i]);
-        SDL_DestroyTexture(character.runRight[i]);
+        SDL_DestroyTexture(character.runRight[i]); // Giải phóng texture chạy sang phải
+        SDL_DestroyTexture(character.runLeft[i]);  // Giải phóng texture chạy sang trái
     }
-    SDL_DestroyTexture(character.up);
-    SDL_DestroyTexture(character.down);
+    SDL_DestroyTexture(character.jump);     // Giải phóng ảnh nhảy khi đi sang phải
+    SDL_DestroyTexture(character.jumpLeft); // Giải phóng ảnh nhảy khi đi sang trái
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+
     IMG_Quit();
     SDL_Quit();
 }
 
-void runGame() {
-    if (!init() || !loadCharacter()) return;
-
-    bool quit = false;
-    SDL_Event e;
-    int frameCounter = 0;
-
-    while (!quit) {
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) quit = true;
-            handleEvent(e);
-        }
-
-        if (character.moving && (character.direction == 2 || character.direction == 3)) {
-            if (++frameCounter >= FRAME_DELAY) {
-                frameCounter = 0;
-                character.frame = (character.frame + 1) % 8;
-            }
-        }
-
-        render();
-        SDL_Delay(16); // 60 FPS
-    }
-
-    close();
-}

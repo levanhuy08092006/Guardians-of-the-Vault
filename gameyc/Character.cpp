@@ -3,10 +3,13 @@
 // Định nghĩa biến toàn cục
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
+SDL_Texture* mapTexture = nullptr;
+SDL_Texture* currentTexture = nullptr;
 Character character;
 bool isLeftPressed = false;
 bool isRightPressed = false;
 vector<Bullet> bullets;
+vector<Wall> walls;
 
 // Các hàm khác giữ nguyên
 bool init() {
@@ -51,7 +54,27 @@ SDL_Texture* loadTexture(const char* path) {
     return texture;
 }
 
+bool loadMap() {
+    mapTexture = loadTexture("mapgame.png");
+    if (!mapTexture) {
+        cerr << "Failed to load map texture!" << endl;
+        return false;
+    }
+
+    // Định nghĩa tường với độ dày (chiều cao)
+    walls.push_back({170, 370, 803, 380}); // Tường 1: cao 10 pixel (392 -> 402)
+    walls.push_back({702, 565, 820, 575}); // Tường 2: cao 10 pixel (565 -> 575)
+    walls.push_back({920, 500, 1125, 510});//3
+    walls.push_back({632, 622, 680, 632});//4
+    walls.push_back({830, 428, 849, 438});//5
+    walls.push_back({860, 530, 875, 540});//6
+    walls.push_back({1155, 580, 1227, 590});//7
+
+    return true;
+}
 bool loadCharacter() {
+
+
     const char* runRightFiles[8] = {"run1.png", "run2.png", "run3.png", "run4.png", "run5.png", "run6.png", "run7.png", "run8.png"};
     const char* runLeftFiles[8] = {"run11.png", "run21.png", "run31.png", "run41.png", "run51.png", "run61.png", "run71.png", "run81.png"};
 
@@ -66,7 +89,7 @@ bool loadCharacter() {
     if (!character.jump || !character.jumpLeft) return false;
 
     character.x = 50;
-    character.y = SCREEN_HEIGHT-80;
+    character.y = SCREEN_HEIGHT-50;
     character.direction = 3; // Mặc định hướng sang phải
     character.frame = 0;
     character.moving = false;
@@ -81,7 +104,7 @@ void handleEvent(SDL_Event& e) {
             case SDLK_UP:
                 if (!character.isJumping) {
                     character.isJumping = true;
-                    character.jumpVelocity = -15 ; // Tốc độ nhảy ban đầu
+                    character.jumpVelocity = -14; // Tốc độ nhảy ban đầu
                 }
                 break;;
             case SDLK_LEFT:
@@ -115,8 +138,16 @@ void handleEvent(SDL_Event& e) {
 }
 
 void render() {
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Màu nền đen
+    // Xóa màn hình và đặt màu nền (nếu cần)
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Màu đen
     SDL_RenderClear(renderer);
+    // Render mapgame với kích thước phù hợp
+    SDL_Rect mapRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT}; // Kích thước bằng màn hình
+
+    // Render mapgame
+    if (mapTexture) {
+        SDL_RenderCopy(renderer, mapTexture, nullptr, nullptr); // Render toàn bộ map lên màn hình
+    }
 
     // Render nhân vật
     SDL_Texture* currentTexture = nullptr;
@@ -133,20 +164,38 @@ void render() {
             currentTexture = character.runRight[character.frame];
         }
     }
-    SDL_Rect destRect = {character.x, character.y, 60, 60};
+
+    SDL_Rect destRect = {character.x, character.y, 50, 50};
     SDL_RenderCopy(renderer, currentTexture, nullptr, &destRect);
 
     // Render đạn
     for (auto& bullet : bullets) {
-        SDL_Rect bulletRect = {bullet.x, bullet.y, 10, 10}; // Kích thước đạn 10x10
+        SDL_Rect bulletRect = {bullet.x, bullet.y, 8, 8}; // Kích thước đạn
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Màu đỏ
         SDL_RenderFillRect(renderer, &bulletRect);
     }
 
     SDL_RenderPresent(renderer);
 }
+bool checkCollisionWithWalls(int newX, int newY) {
+    int characterWidth = 50;
+    int characterHeight = 50;
+    SDL_Rect characterRect = {newX, newY, characterWidth, characterHeight};
+
+    for (const auto& wall : walls) {
+        SDL_Rect wallRect = {wall.x1, wall.y1, wall.x2 - wall.x1, wall.y2 - wall.y1};
+        if (SDL_HasIntersection(&characterRect, &wallRect)) {
+            return true; // Có va chạm
+        }
+    }
+    return false; // Không có va chạm
+}
 
 void close() {
+    if (mapTexture) {
+        SDL_DestroyTexture(mapTexture);
+        mapTexture = nullptr;
+    }
     for (int i = 0; i < 8; ++i) {
         SDL_DestroyTexture(character.runRight[i]); // Giải phóng texture chạy sang phải
         SDL_DestroyTexture(character.runLeft[i]);  // Giải phóng texture chạy sang trái

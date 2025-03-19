@@ -11,8 +11,8 @@
 #include <algorithm>
 using namespace std;
 
-const int SCREEN_WIDTH = 1200;
-const int SCREEN_HEIGHT = 800;
+const int SCREEN_WIDTH = 1435;
+const int SCREEN_HEIGHT = 700;
 const int CHARACTER_SPEED = 4;
 const int FRAME_DELAY = 10;
 const int BULLET_SPEED = 10;
@@ -33,6 +33,12 @@ struct Bullet {
     int x, y;
     int direction; // 0: Up, 1: Down, 2: Left, 3: Right
 };
+
+struct Wall {
+    int x1, y1; // Tọa độ điểm đầu
+    int x2, y2; // Tọa độ điểm cuối
+};
+
 // Khai báo biến toàn cục
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
@@ -40,6 +46,8 @@ extern Character character;
 extern bool isLeftPressed;
 extern bool isRightPressed;
 extern vector <Bullet> bullets;
+extern vector<Wall> walls;
+extern bool loadMap();
 // Hàm khởi tạo, xử lý, render
 bool init();
 bool loadCharacter();
@@ -48,5 +56,7 @@ void render();
 void close();
 void runGame();
 SDL_Texture* loadTexture(const char* path);
+extern SDL_Texture* mapTexture; // Thêm biến toàn cục để lưu texture của map
+bool checkCollisionWithWalls(int newX, int newY);
 
 #endif // CHARACTER_H

@@ -10,16 +10,27 @@ bool isLeftPressed = false;
 bool isRightPressed = false;
 vector<Bullet> bullets;
 vector<Wall> walls;
+vector<Enemy> enemiesGroup1; // Định nghĩa nhóm 1
+vector<Enemy> enemiesGroup2; // Định nghĩa nhóm 2
+Uint32 lastSpawnTimeGroup1 = 0; // Thời gian spawn cuối cùng cho nhóm 1
+Uint32 lastSpawnTimeGroup2 = 0; // Thời gian spawn cuối cùng cho nhóm 2
+SDL_Texture* gameOverTexture = nullptr; // Định nghĩa texture gameover
+bool gameOver = false; // Trạng thái gameover ban đầu là false
+Mix_Music* backgroundMusic = nullptr; // Định nghĩa nhạc nền
 
 // Các hàm khác giữ nguyên
 bool init() {
-    //Khởi tạo SDL để xử lý đồ họa
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) { // Thêm SDL_INIT_AUDIO
         cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << endl;
         return false;
     }
+    // Khởi tạo SDL_mixer
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        cerr << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << endl;
+        return false;
+    }
     //tạo cửa sổ có kích thước SCREEN_WIDTH x SCREEN_HEIGHT
-    window = SDL_CreateWindow("Character Movement", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("protect the treasure", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window) {
         cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << endl;
         return false;
@@ -44,8 +55,6 @@ SDL_Texture* loadTexture(const char* path) {
         cerr << "Unable to load image " << path << "! SDL_image Error: " << IMG_GetError() << endl;
         return nullptr;
     }
-    /*SDL_CreateTextureFromSurface(renderer, loadedSurface): Chuyển ảnh từ SDL_Surface thành SDL_Texture để hiển thị lên màn hình.
-     SDL_FreeSurface(loadedSurface): Giải phóng bộ nhớ của loadedSurface vì đã chuyển sang texture.*/
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, loadedSurface);
     SDL_FreeSurface(loadedSurface);
     if (!texture) {
@@ -95,7 +104,49 @@ bool loadCharacter() {
     character.moving = false;
     character.isJumping = false;
     character.jumpVelocity = 0;
-    return true;
+
+    // Tải texture gameover
+    gameOverTexture = loadTexture("gameover.png");
+    if (!gameOverTexture) {
+        cerr << "Failed to load gameover.png!" << endl;
+        return false;
+    }
+    // Tải và phát nhạc nền
+    backgroundMusic = Mix_LoadMUS("musicgame.wav");
+    if (!backgroundMusic) {
+        cerr << "Failed to load background music! SDL_mixer Error: " << Mix_GetError() << endl;
+        return false;
+    }
+    Mix_PlayMusic(backgroundMusic, -1); // Phát lặp vô hạn
+
+// Khởi tạo nhóm 1
+    vector<pair<int, int>> waypoints1 = {{225, 335}, {945, 335}, {945, 470}, {906, 470}, {821, 520}, {680, 570}, {580, 665}, {140, 665}};
+        Enemy enemy1;
+        enemy1.x = 225;
+        enemy1.y = 250; // Đặt trên mặt đất (giả sử chiều cao enemy là 60)
+        enemy1.targetIndex = 0;
+        enemy1.waypoints = waypoints1;
+        enemy1.texture = loadTexture("enemy.png");
+        if (!enemy1.texture) {
+            cerr << "Failed to load enemy.png!" << endl;
+            return false;
+        }
+        enemiesGroup1.push_back(enemy1);
+
+// Khởi tạo nhóm 2
+    vector<pair<int, int>> waypoints2 = {{1065, 665}, {140, 665}};
+        Enemy enemy2;
+        enemy2.x = 1065;
+        enemy2.y = 665 ; // Đặt trên mặt đất
+        enemy2.targetIndex = 0;
+        enemy2.waypoints = waypoints2;
+        enemy2.texture = loadTexture("enemy.png");
+        if (!enemy2.texture) {
+        cerr << "Failed to load enemy.png!" << endl;
+        return false;
+    }
+        enemiesGroup2.push_back(enemy2);
+        return true;
 }
 
 void handleEvent(SDL_Event& e) {
@@ -138,41 +189,64 @@ void handleEvent(SDL_Event& e) {
 }
 
 void render() {
-    // Xóa màn hình và đặt màu nền (nếu cần)
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Màu đen
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
-    // Render mapgame với kích thước phù hợp
-    SDL_Rect mapRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT}; // Kích thước bằng màn hình
 
-    // Render mapgame
-    if (mapTexture) {
-        SDL_RenderCopy(renderer, mapTexture, nullptr, nullptr); // Render toàn bộ map lên màn hình
-    }
+    if (!gameOver) {
+        // Render bình thường nếu chưa gameover
+        if (mapTexture) {
+            SDL_RenderCopy(renderer, mapTexture, nullptr, nullptr);
+        }
 
-    // Render nhân vật
-    SDL_Texture* currentTexture = nullptr;
-    if (character.isJumping) {
-        if (character.direction == 2) {
-            currentTexture = character.jumpLeft;
+        SDL_Texture* currentTexture = nullptr;
+        if (character.isJumping) {
+            if (character.direction == 2) {
+                currentTexture = character.jumpLeft;
+            } else {
+                currentTexture = character.jump;
+            }
         } else {
-            currentTexture = character.jump;
+            if (character.direction == 2) {
+                currentTexture = character.runLeft[character.frame];
+            } else {
+                currentTexture = character.runRight[character.frame];
+            }
+        }
+
+        SDL_Rect destRect = {character.x, character.y, 50, 50};
+        SDL_RenderCopy(renderer, currentTexture, nullptr, &destRect);
+
+        for (auto& bullet : bullets) {
+            SDL_Rect bulletRect = {bullet.x, bullet.y, 8, 8};
+            SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            SDL_RenderFillRect(renderer, &bulletRect);
+        }
+
+        for (auto& enemy : enemiesGroup1) {
+            SDL_Rect enemyRect = {enemy.x, enemy.y, 60, 60};
+            if (enemy.texture) {
+                SDL_RenderCopy(renderer, enemy.texture, nullptr, &enemyRect);
+            } else {
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                SDL_RenderFillRect(renderer, &enemyRect);
+            }
+        }
+
+        for (auto& enemy : enemiesGroup2) {
+            SDL_Rect enemyRect = {enemy.x, enemy.y, 60, 60};
+            if (enemy.texture) {
+                SDL_RenderCopy(renderer, enemy.texture, nullptr, &enemyRect);
+            } else {
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                SDL_RenderFillRect(renderer, &enemyRect);
+            }
         }
     } else {
-        if (character.direction == 2) {
-            currentTexture = character.runLeft[character.frame];
-        } else {
-            currentTexture = character.runRight[character.frame];
+        // Render ảnh gameover khi game kết thúc
+        if (gameOverTexture) {
+            SDL_Rect gameOverRect = {0, 0, SCREEN_WIDTH, SCREEN_HEIGHT}; // Full màn hình
+            SDL_RenderCopy(renderer, gameOverTexture, nullptr, &gameOverRect);
         }
-    }
-
-    SDL_Rect destRect = {character.x, character.y, 50, 50};
-    SDL_RenderCopy(renderer, currentTexture, nullptr, &destRect);
-
-    // Render đạn
-    for (auto& bullet : bullets) {
-        SDL_Rect bulletRect = {bullet.x, bullet.y, 8, 8}; // Kích thước đạn
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Màu đỏ
-        SDL_RenderFillRect(renderer, &bulletRect);
     }
 
     SDL_RenderPresent(renderer);
@@ -200,12 +274,19 @@ void close() {
         SDL_DestroyTexture(character.runRight[i]); // Giải phóng texture chạy sang phải
         SDL_DestroyTexture(character.runLeft[i]);  // Giải phóng texture chạy sang trái
     }
+    // Giải phóng texture của enemies
+    for (auto& enemy : enemiesGroup1) {
+        SDL_DestroyTexture(enemy.texture);
+    }
+    for (auto& enemy : enemiesGroup2) {
+        SDL_DestroyTexture(enemy.texture);
+    }
     SDL_DestroyTexture(character.jump);     // Giải phóng ảnh nhảy khi đi sang phải
     SDL_DestroyTexture(character.jumpLeft); // Giải phóng ảnh nhảy khi đi sang trái
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-
+    Mix_CloseAudio(); // Đóng SDL_mixer
     IMG_Quit();
     SDL_Quit();
 }

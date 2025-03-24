@@ -31,3 +31,4 @@ bool loadHero();
 void handleEvent(SDL_Event& e);
 
 #endif // HERO_H
+

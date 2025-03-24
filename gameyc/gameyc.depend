@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1742822094 source:c:\users\admin\downloads\codegame\gameyc\gameyc\main.cpp
+1742824327 source:c:\users\admin\downloads\codegame\gameyc\gameyc\main.cpp
 	"Hero.h"
 	"GameUtils.h"
 	"Map.h"
@@ -844,12 +844,12 @@
 	<SDL_image.h>
 	<SDL_mixer.h>
 
-1742821755 source:c:\users\admin\downloads\codegame\gameyc\gameyc\hero.cpp
+1742826016 source:c:\users\admin\downloads\codegame\gameyc\gameyc\hero.cpp
 	"Hero.h"
 	"GameUtils.h"
 	<iostream>
 
-1742823348 c:\users\admin\downloads\codegame\gameyc\gameyc\hero.h
+1742825980 c:\users\admin\downloads\codegame\gameyc\gameyc\hero.h
 	<SDL.h>
 	<vector>
 

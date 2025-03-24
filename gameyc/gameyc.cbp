@@ -42,8 +42,14 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
-		<Unit filename="Character.cpp" />
-		<Unit filename="Character.h" />
+		<Unit filename="GameUtils.cpp" />
+		<Unit filename="GameUtils.h" />
+		<Unit filename="Hero.cpp" />
+		<Unit filename="Hero.h" />
+		<Unit filename="Map.cpp" />
+		<Unit filename="Map.h" />
+		<Unit filename="Render.cpp" />
+		<Unit filename="Render.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<lib_finder disable_auto="1" />

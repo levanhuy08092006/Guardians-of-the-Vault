@@ -37,14 +37,13 @@ int main() {
                 }
                 hero.direction = 3;
             }
-
             if (hero.isJumping) {
                 hero.y += hero.jumpVelocity;
                 hero.jumpVelocity += 1;
 
                 bool landed = false;
                 for (const auto& wall : walls) {
-                    if (hero.jumpVelocity > 0 && hero.y + 50 >= wall.y1 && hero.y + 50 <= wall.y2 &&
+                    if (hero.jumpVelocity > 0 && hero.y + 80 >= wall.y1 && hero.y + 80 <= wall.y2 &&
                         hero.x + 50 > wall.x1 && hero.x < wall.x2) {
                         hero.y = wall.y1 - 50;
                         hero.isJumping = false;
@@ -76,6 +75,14 @@ int main() {
                     hero.isJumping = true;
                     hero.jumpVelocity = 0;
                 }
+            }
+            if (!hero.isJumping && (isLeftPressed || isRightPressed)) {
+                if (++frameCounter >= FRAME_DELAY) {
+                    frameCounter = 0;
+                    hero.frame = (hero.frame + 1) % 8;
+                }
+            } else {
+                hero.frame = 0; // Đặt lại frame về 0 khi không di chuyển
             }
         }
 

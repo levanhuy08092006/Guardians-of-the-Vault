@@ -43,7 +43,7 @@ int main() {
 
                 bool landed = false;
                 for (const auto& wall : walls) {
-                    if (hero.jumpVelocity > 0 && hero.y + 80 >= wall.y1 && hero.y + 80 <= wall.y2 &&
+                    if (hero.jumpVelocity > 0 && hero.y + 50 >= wall.y1 && hero.y + 50 <= wall.y2 &&
                         hero.x + 50 > wall.x1 && hero.x < wall.x2) {
                         hero.y = wall.y1 - 50;
                         hero.isJumping = false;
@@ -51,12 +51,12 @@ int main() {
                         landed = true;
                         break;
                     }
-                    else if (hero.jumpVelocity < 0 && hero.y <= wall.y2 && hero.y >= wall.y1 &&
+                    /*else if (hero.jumpVelocity < 0 && hero.y <= wall.y2 && hero.y >= wall.y1 &&
                              hero.x + 50 > wall.x1 && hero.x < wall.x2) {
                         hero.y = wall.y2;
                         hero.jumpVelocity = 0;
                         break;
-                    }
+                    }*/
                 }
                 if (!landed && hero.y >= SCREEN_HEIGHT - 50) {
                     hero.y = SCREEN_HEIGHT - 50;

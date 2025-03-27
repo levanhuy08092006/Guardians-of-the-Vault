@@ -24,9 +24,8 @@ bool loadMap() {
 }
 
 bool checkCollisionWithWalls(int newX, int newY) {
-    int characterWidth = 50;
-    int characterHeight = 50;
-    SDL_Rect characterRect = {newX, newY, characterWidth, characterHeight};
+
+    SDL_Rect characterRect = {newX, newY, CHARACTER_WIDTH, CHARACTER_HEIGHT};
 
     for (const auto& wall : walls) {
         SDL_Rect wallRect = {wall.x1, wall.y1, wall.x2 - wall.x1, wall.y2 - wall.y1};

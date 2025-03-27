@@ -30,5 +30,5 @@ extern std::vector<Bullet> bullets;
 bool loadHero();
 void handleEvent(SDL_Event& e);
 
-#endif // HERO_H
+#endif
 

@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1742824327 source:c:\users\admin\downloads\codegame\gameyc\gameyc\main.cpp
+1743003414 source:c:\users\admin\downloads\codegame\gameyc\gameyc\main.cpp
 	"Hero.h"
 	"GameUtils.h"
 	"Map.h"
@@ -839,35 +839,35 @@
 	"GameUtils.h"
 	<iostream>
 
-1742823348 c:\users\admin\downloads\codegame\gameyc\gameyc\gameutils.h
+1742999676 c:\users\admin\downloads\codegame\gameyc\gameyc\gameutils.h
 	<SDL.h>
 	<SDL_image.h>
 	<SDL_mixer.h>
 
-1742826016 source:c:\users\admin\downloads\codegame\gameyc\gameyc\hero.cpp
+1742827073 source:c:\users\admin\downloads\codegame\gameyc\gameyc\hero.cpp
 	"Hero.h"
 	"GameUtils.h"
 	<iostream>
 
-1742825980 c:\users\admin\downloads\codegame\gameyc\gameyc\hero.h
+1742977171 c:\users\admin\downloads\codegame\gameyc\gameyc\hero.h
 	<SDL.h>
 	<vector>
 
-1742823383 source:c:\users\admin\downloads\codegame\gameyc\gameyc\map.cpp
+1742979546 source:c:\users\admin\downloads\codegame\gameyc\gameyc\map.cpp
 	"Map.h"
 	"GameUtils.h"
 	<iostream>
 
-1742821755 c:\users\admin\downloads\codegame\gameyc\gameyc\map.h
+1742977171 c:\users\admin\downloads\codegame\gameyc\gameyc\map.h
 	"GameUtils.h"
 	<vector>
 
-1742821898 source:c:\users\admin\downloads\codegame\gameyc\gameyc\render.cpp
+1743044332 source:c:\users\admin\downloads\codegame\gameyc\gameyc\render.cpp
 	"Render.h"
 	"Map.h"
 	<algorithm>
 
-1742821898 c:\users\admin\downloads\codegame\gameyc\gameyc\render.h
+1743041508 c:\users\admin\downloads\codegame\gameyc\gameyc\render.h
 	"GameUtils.h"
 	"Hero.h"
 	<vector>

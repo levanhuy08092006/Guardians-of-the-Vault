@@ -15,4 +15,4 @@ extern std::vector<Wall> walls;
 bool loadMap();
 bool checkCollisionWithWalls(int newX, int newY);
 
-#endif // MAP_H
+#endif

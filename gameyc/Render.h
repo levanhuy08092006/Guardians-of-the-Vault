@@ -19,7 +19,9 @@ extern Uint32 lastSpawnTimeGroup1;
 extern Uint32 lastSpawnTimeGroup2;
 extern SDL_Texture* gameOverTexture;
 extern bool gameOver;
+extern SDL_Texture* winGameTexture;
+extern bool gameWon;
 
 void render();
 
-#endif // RENDER_H
+#endif

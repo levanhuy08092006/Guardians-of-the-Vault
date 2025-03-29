@@ -13,7 +13,7 @@ const int CHARACTER_SPEED = 4;
 const int FRAME_DELAY = 10;
 const int BULLET_SPEED = 8;
 const int ENEMY_SPEED = 1;
-const int SPAWN_INTERVAL = 3000;
+const int SPAWN_INTERVAL = 1000;
 
 extern SDL_Window* window;
 extern SDL_Renderer* renderer;
